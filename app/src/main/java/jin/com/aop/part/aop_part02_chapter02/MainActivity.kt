@@ -2,8 +2,13 @@ package jin.com.aop.part.aop_part02_chapter02
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.NumberPicker
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 
 class MainActivity : AppCompatActivity() {
 
@@ -23,6 +28,20 @@ class MainActivity : AppCompatActivity() {
             findViewById(R.id.numberPick)
     }
 
+    private var didRun = false
+    private val pickNumberSet = hashSetOf<Int>()
+    private val numberTextViewList:List<TextView> by lazy {
+        listOf<TextView>(
+            findViewById(R.id.textView1),
+            findViewById(R.id.textView2),
+                    findViewById(R.id.textView3),
+                    findViewById(R.id.textView4),
+                    findViewById(R.id.textView5),
+        findViewById(R.id.textView6)
+        )
+    }
+
+
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_main)
@@ -30,5 +49,92 @@ class MainActivity : AppCompatActivity() {
             numberPicker.minValue = 1
             numberPicker.maxValue= 45
 
+            initRunButton()
+            initAddButton()
+            initClearButton()
+
         }
+
+    private fun initRunButton() {
+        runButton.setOnClickListener {
+            val list = getRandomNumber()
+
+            didRun = true
+
+            list.forEachIndexed { index, number ->
+                val textView = numberTextViewList[index]
+                textView.text = number.toString()
+                textView.isVisible = true
+
+                setNumberBackground(number, textView)
+            }
+        }
+    }
+
+    private fun initAddButton()  {
+        addButton.setOnClickListener {
+            if(didRun) {
+                Toast.makeText(this,"초기화 후 시도",Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if(pickNumberSet.size>=6) {
+                Toast.makeText(this,"번호는 5개 까지만", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if(pickNumberSet.contains(numberPicker.value)) {
+                Toast.makeText(this,"이미 선택한 번호입니다", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val textView = numberTextViewList[pickNumberSet.size]
+            textView.isVisible = true
+            textView.text = numberPicker.value.toString()
+            setNumberBackground(numberPicker.value, textView)
+
+
+            pickNumberSet.add(numberPicker.value)
+
+        }
+    }
+
+    private fun setNumberBackground(number:Int, textView : TextView) {
+        when(number) {
+            in 1..10 -> textView.background = ContextCompat.getDrawable(this,R.drawable.circle_yellow)
+            in 11..20 -> textView.background = ContextCompat.getDrawable(this,R.drawable.circle_blue)
+            in 21..30 -> textView.background = ContextCompat.getDrawable(this,R.drawable.circle_red)
+            in 31..40 -> textView.background = ContextCompat.getDrawable(this,R.drawable.circle_grey)
+            else -> textView.background = ContextCompat.getDrawable(this,R.drawable.circle_green)
+        }
+    }
+
+    private fun initClearButton() {
+        clearButton.setOnClickListener {
+            pickNumberSet.clear()
+            numberTextViewList.forEach {
+                it.isVisible=false
+            }
+
+            didRun =false
+        }
+    }
+
+    private fun getRandomNumber(): List<Int> {
+        val numberList = mutableListOf<Int>().apply {
+            for(i in 1..45) {
+                if(pickNumberSet.contains(i)) {
+                    continue
+                }
+                this.add(i)
+            }
+        }
+
+        numberList.shuffle()
+
+        val newList = pickNumberSet.toList() + numberList.subList(0,6-pickNumberSet.size)
+        return newList.sorted()
+    }
+
+
     }
